@@ -32,7 +32,7 @@ class PhysicsWorldModel(nn.Module):
         
         # 2. Integrate using Neural ODE
         # z_t has shape (len(t), batch, 2 * latent_dim)
-        z_t = odeint(self.ode_func, z0, t, method='rk4', options={'step_size': 0.1})
+        z_t = odeint(self.ode_func, z0, t, method='euler', options={'step_size': 0.1})
         
         # 3. Decode each timestep
         seq_len, batch_size, latent_dim_2 = z_t.shape
