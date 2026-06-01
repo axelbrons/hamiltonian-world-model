@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 
 class DoublePendulumDataset(Dataset):
-    def __init__(self, num_sequences=100, seq_len=10, img_size=32):
+    def __init__(self, num_sequences=100, seq_len=20, img_size=32):
         self.num_sequences = num_sequences
         self.seq_len = seq_len
         self.img_size = img_size
@@ -17,10 +17,13 @@ class DoublePendulumDataset(Dataset):
         for i in range(self.num_sequences):
             env.reset()
             
-            # Retour à la position forcée en haut (sans entropie)
-            env.unwrapped.state = np.array([3.14, 0.0, 0.0, 0.0], dtype=np.float32)
-            # Petite pichenette pour déclencher la chute
-            env.step(np.random.choice([0, 2]))
+            # Échantillonnage aléatoire complet de l'état initial
+            theta1 = np.random.uniform(-np.pi, np.pi)
+            theta2 = np.random.uniform(-np.pi, np.pi)
+            theta1_dot = np.random.uniform(-1.0, 1.0)
+            theta2_dot = np.random.uniform(-1.0, 1.0)
+            
+            env.unwrapped.state = np.array([theta1, theta2, theta1_dot, theta2_dot], dtype=np.float32)
 
             seq = []
             for _ in range(self.seq_len):
