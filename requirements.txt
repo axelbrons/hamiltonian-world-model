@@ -1,0 +1,13 @@
+# Core PyTorch and Neural ODE solver
+torch
+torchdiffeq
+
+# Physics environment and simulation (Acrobot-v1)
+gymnasium[classic-control]
+
+# Data manipulation and computer vision
+numpy
+opencv-python
+
+# Visualization and plotting
+matplotlib

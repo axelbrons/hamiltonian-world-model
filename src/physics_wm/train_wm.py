@@ -10,14 +10,14 @@ def train():
     print(f"Using device: {device}")
 
     # Hyperparameters
-    num_epochs = 160
+    num_epochs = 40
     batch_size = 16
     learning_rate = 1e-3
     seq_len = 10
     latent_dim = 8
     dt = 0.2
     
-    dataset = DoublePendulumDataset(num_sequences=2000, seq_len=seq_len, img_size=32)
+    dataset = DoublePendulumDataset(num_sequences=1000, seq_len=seq_len, img_size=32)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
     model = PhysicsWorldModel(in_channels=9, out_channels=3, latent_dim=latent_dim).to(device)
