@@ -5,16 +5,26 @@ class HNN(nn.Module):
     def __init__(self, input_dim, hidden_dim=200):
         super(HNN, self).__init__()
         # input_dim should be 2*d (q and p)
-        self.net = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
+        self.d = input_dim // 2
+        self.net_q = nn.Sequential(
+            nn.Linear(self.d, hidden_dim),
             nn.Tanh(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.Tanh(),
-            nn.Linear(hidden_dim, 1) # Energy is a scalar
+            nn.Linear(hidden_dim, 1) # Potential energy V(q)
+        )
+        self.net_p = nn.Sequential(
+            nn.Linear(self.d, hidden_dim),
+            nn.Tanh(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.Tanh(),
+            nn.Linear(hidden_dim, 1) # Kinetic energy T(p)
         )
     
     def forward(self, x):
-        return self.net(x)
+        q = x[:, :self.d]
+        p = x[:, self.d:]
+        return self.net_q(q) + self.net_p(p)
 
 class HNN_ODE(nn.Module):
     def __init__(self, hnn):

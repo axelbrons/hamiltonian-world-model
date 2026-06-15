@@ -35,21 +35,17 @@ def train():
         # Physics loss scheduling (warm up for 5 epochs)
         lambda_phys = 0.1 if epoch > 5 else 0.0
         
-        for batch_imgs, batch_acts in dataloader:
-            batch_imgs = batch_imgs.to(device)
-            batch_acts = batch_acts.to(device)
+        for batch in dataloader:
+            batch = batch.to(device)
             optimizer.zero_grad()
             
             # Input is the first 3 frames stacked
-            x_in = torch.cat([batch_imgs[:, 0], batch_imgs[:, 1], batch_imgs[:, 2]], dim=1)
+            x_in = torch.cat([batch[:, 0], batch[:, 1], batch[:, 2]], dim=1)
             # Targets are frames 2 to seq_len-1
-            targets = batch_imgs[:, 2:].transpose(0, 1)
-            
-            # Actions corresponding to predictions (from step 2 to seq_len-2)
-            actions_in = batch_acts[:, 2:-1].transpose(0, 1)
+            targets = batch[:, 2:].transpose(0, 1)
             
             # Preds shape: (T_pred, B, 3, 32, 32)
-            preds, z0, z_t = model(x_in, actions_in, t)
+            preds, z0, z_t = model(x_in, t)
             
             recon_loss = criterion(preds, targets)
             

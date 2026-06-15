@@ -19,28 +19,24 @@ class PhysicsWorldModel(nn.Module):
         self.ode_func = HNN_ODE(self.hnn)
         
     def encode(self, x):
-        # x: (batch, in_channels, H, W)
         return self.encoder(x)
         
     def decode(self, z):
-        # z: (batch, latent_dim * 2)
         return self.decoder(z)
         
-    def leapfrog_step(self, z, u, dt):
+    def leapfrog_step(self, z, dt):
         d = z.shape[-1] // 2
-        if u is None:
-            u = torch.zeros(z.shape[0], d, device=z.device)
-            
+        
         with torch.enable_grad():
             z_with_grad = z.detach().requires_grad_(True) if not z.requires_grad else z
             q = z_with_grad[:, :d]
             p = z_with_grad[:, d:]
             
-            # Step 1: p_half = p + (dt / 2) * (-dH/dq(q, p) + u)
+            # Step 1: p_half = p - (dt / 2) * dH/dq(q, p)
             z_k = torch.cat([q, p], dim=-1)
             H_k = self.hnn(z_k)
             dH_dq = torch.autograd.grad(H_k.sum(), q, create_graph=True)[0]
-            p_half = p + (dt / 2.0) * (-dH_dq + u)
+            p_half = p - (dt / 2.0) * dH_dq
             
             # Step 2: q_next = q + dt * dH/dp(q, p_half)
             z_half = torch.cat([q, p_half], dim=-1)
@@ -48,11 +44,11 @@ class PhysicsWorldModel(nn.Module):
             dH_dp = torch.autograd.grad(H_half.sum(), p_half, create_graph=True)[0]
             q_next = q + dt * dH_dp
             
-            # Step 3: p_next = p_half + (dt / 2) * (-dH/dq(q_next, p_half) + u)
+            # Step 3: p_next = p_half - (dt / 2) * dH/dq(q_next, p_half)
             z_half2 = torch.cat([q_next, p_half], dim=-1)
             H_half2 = self.hnn(z_half2)
             dH_dq2 = torch.autograd.grad(H_half2.sum(), q_next, create_graph=True)[0]
-            p_next = p_half + (dt / 2.0) * (-dH_dq2 + u)
+            p_next = p_half - (dt / 2.0) * dH_dq2
             
             z_next = torch.cat([q_next, p_next], dim=-1)
             
@@ -61,7 +57,7 @@ class PhysicsWorldModel(nn.Module):
             
         return z_next
 
-    def integrate_leapfrog(self, z0, actions, t):
+    def integrate_leapfrog(self, z0, t):
         dt = (t[1] - t[0]).item()
         sub_steps = 4
         sub_dt = dt / sub_steps
@@ -69,21 +65,20 @@ class PhysicsWorldModel(nn.Module):
         z_t = [z0]
         z = z0
         
-        for k in range(len(t) - 1):
-            uk = actions[k] if actions is not None else None
+        for _ in range(len(t) - 1):
             for _ in range(sub_steps):
-                z = self.leapfrog_step(z, uk, sub_dt)
+                z = self.leapfrog_step(z, sub_dt)
             z_t.append(z)
             
         return torch.stack(z_t, dim=0)
 
-    def forward(self, x, actions, t, solver='leapfrog'):
+    def forward(self, x, t, solver='leapfrog'):
         # 1. Encode to initial state z0 = [q0, p0]
         z0 = self.encode(x)
         
         # 2. Integrate using Selected Solver
         if solver == 'leapfrog':
-            z_t = self.integrate_leapfrog(z0, actions, t)
+            z_t = self.integrate_leapfrog(z0, t)
         else:
             z_t = odeint(self.ode_func, z0, t, method='rk4', options={'step_size': 0.05})
         
