@@ -7,7 +7,7 @@ gymnasium[classic-control]
 
 # Data manipulation and computer vision
 numpy
-opencv-python
+opencv-python-headless
 
 # Visualization and plotting
 matplotlib

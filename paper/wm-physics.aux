@@ -1,0 +1,54 @@
+\relax 
+\providecommand \babel@aux [2]{\global \let \babel@toc \@gobbletwo }
+\@nameuse{bbl@beforestart}
+\catcode `:\active 
+\catcode `;\active 
+\catcode `!\active 
+\catcode `?\active 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\babel@aux{french}{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Mécanique Hamiltonienne}{1}{section.2}\protected@file@percent }
+\newlabel{sec:hamilton}{{2}{1}{Mécanique Hamiltonienne}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Théorie}{1}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Mécanique Lagrangienne}{1}{section*.1}\protected@file@percent }
+\newlabel{eq:position}{{1}{1}{Mécanique Lagrangienne}{equation.1}{}}
+\citation{ha2018worldmodels}
+\@writefile{toc}{\contentsline {paragraph}{Mécanique Hamiltonienne}{2}{section*.2}\protected@file@percent }
+\newlabel{eq:hamiltonien}{{2}{2}{Mécanique Hamiltonienne}{equation.2}{}}
+\newlabel{eq:diff}{{3}{2}{Mécanique Hamiltonienne}{equation.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}World Model avec HNN et Neural ODE}{2}{section.3}\protected@file@percent }
+\newlabel{fig:architecture}{{3}{3}{World Model avec HNN et Neural ODE}{section.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Architecture général du modèle}}{3}{figure.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{1ère étape (obtention de $z_0$):}{3}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{2ème étape (obtention de $\mathcal  {H}_{\theta }$):}{3}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{3ème étape (obtention du champs de vecteurs):}{3}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{4ème étape (obtention de $z(t)$):}{4}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{5ème étape (reconstruction de notre $z_{t+1}$):}{4}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Expérimentations}{4}{section.4}\protected@file@percent }
+\newlabel{sec:experiments}{{4}{4}{Expérimentations}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Génération du Dataset et Prétraitement}{4}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Prétraitement}{4}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Entraînement}{4}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Objectifs d'entraînement et régularisations physiques}{4}{subsection.4.2}\protected@file@percent }
+\newlabel{subsec:objectifs}{{4.2}{4}{Objectifs d'entraînement et régularisations physiques}{subsection.4.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Perte de reconstruction ($\mathcal  {L}_{\text  {recon}}$):}{5}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Perte de conservation de l'énergie ($\mathcal  {L}_{\text  {energy}}$):}{5}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Perte de cohérence de coordonnées ($\mathcal  {L}_{\text  {cc}}$):}{5}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Résultats}{5}{subsection.4.3}\protected@file@percent }
+\newlabel{subsec:results}{{4.3}{5}{Résultats}{subsection.4.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Comparaison qualitative temporelle entre les observations réelles (GT, ligne du haut) et les prédictions générées par le décodeur du World Model à partir de la trajectoire latente intégrée par le HNN-ODE (Pred, ligne du bas) pour les pas de temps $T+2$ à $T+11$.}}{6}{figure.2}\protected@file@percent }
+\newlabel{fig:results}{{2}{6}{Comparaison qualitative temporelle entre les observations réelles (GT, ligne du haut) et les prédictions générées par le décodeur du World Model à partir de la trajectoire latente intégrée par le HNN-ODE (Pred, ligne du bas) pour les pas de temps $T+2$ à $T+11$}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Visualisation continue de la trajectoire réelle (ligne verte continue) et prédite par le HNN (ligne rouge pointillée) de l'extrémité du double pendule dans l'espace image de $T+2$ à $T+11$.}}{6}{figure.3}\protected@file@percent }
+\newlabel{fig:trajectory}{{3}{6}{Visualisation continue de la trajectoire réelle (ligne verte continue) et prédite par le HNN (ligne rouge pointillée) de l'extrémité du double pendule dans l'espace image de $T+2$ à $T+11$}{figure.3}{}}
+\bibstyle{plain}
+\bibdata{wm-physics}
+\bibcite{ha2018worldmodels}{1}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Évolution temporelle de l'énergie physique totale du système. La vérité terrain (ligne verte) reste parfaitement constante. Notre modèle HNN-ODE (ligne bleue en pointillés) préserve la conservation de l'énergie avec des oscillations infimes, tandis que la baseline Neural ODE classique (ligne rouge pointillée) dissipe artificiellement l'énergie, illustrant l'importance de la régularisation hamiltonienne.}}{7}{figure.4}\protected@file@percent }
+\newlabel{fig:energy_comparison}{{4}{7}{Évolution temporelle de l'énergie physique totale du système. La vérité terrain (ligne verte) reste parfaitement constante. Notre modèle HNN-ODE (ligne bleue en pointillés) préserve la conservation de l'énergie avec des oscillations infimes, tandis que la baseline Neural ODE classique (ligne rouge pointillée) dissipe artificiellement l'énergie, illustrant l'importance de la régularisation hamiltonienne}{figure.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{7}{section.5}\protected@file@percent }
+\newlabel{sec:conclusion}{{5}{7}{Conclusion}{section.5}{}}
+\gdef \@abspage@last{7}
