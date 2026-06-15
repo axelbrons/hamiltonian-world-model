@@ -82,6 +82,10 @@ class PhysicsWorldModel(nn.Module):
         else:
             z_t = odeint(self.ode_func, z0, t, method='rk4', options={'step_size': 0.05})
         
+        if self.training:
+            # Latent noise injection (Solution 3)
+            z_t = z_t + torch.randn_like(z_t) * 1e-3
+        
         # 3. Decode each timestep
         seq_len, batch_size, latent_dim_2 = z_t.shape
         z_t_flat = z_t.view(-1, latent_dim_2)
