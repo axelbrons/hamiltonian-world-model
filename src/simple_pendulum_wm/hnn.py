@@ -22,8 +22,8 @@ class HNN(nn.Module):
         )
     
     def forward(self, x):
-        q = x[:, :self.d]
-        p = x[:, self.d:]
+        q = x[..., :self.d]
+        p = x[..., self.d:]
         return self.net_q(q) + self.net_p(p)
 
 class HNN_ODE(nn.Module):
