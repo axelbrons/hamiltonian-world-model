@@ -16,7 +16,9 @@ class PhysicsWorldModel(nn.Module):
         self.decoder = Decoder(latent_dim, out_channels)
         
         self.hnn = HNN(input_dim=latent_dim * 2)
-        self.ode_func = HNN_ODE(self.hnn)
+        # Learnable friction/damping coefficient
+        self.gamma = nn.Parameter(torch.tensor([0.05]))
+        self.ode_func = HNN_ODE(self.hnn, parent_model=self)
         
     def encode(self, x):
         return self.encoder(x)
@@ -32,23 +34,24 @@ class PhysicsWorldModel(nn.Module):
             q = z_with_grad[:, :d]
             p = z_with_grad[:, d:]
             
-            # Step 1: p_half = p - (dt / 2) * dH/dq(q, p)
+            gamma = torch.abs(self.gamma)
+            # Step 1: p_half = (p - (dt / 2) * dH/dq) / (1 + (dt / 2) * gamma)
             z_k = torch.cat([q, p], dim=-1)
             H_k = self.hnn(z_k)
             dH_dq = torch.autograd.grad(H_k.sum(), q, create_graph=True)[0]
-            p_half = p - (dt / 2.0) * dH_dq
+            p_half = (p - (dt / 2.0) * dH_dq) / (1.0 + (dt / 2.0) * gamma)
             
-            # Step 2: q_next = q + dt * dH/dp(q, p_half)
+            # Step 2: q_next = q + dt * dH/dp
             z_half = torch.cat([q, p_half], dim=-1)
             H_half = self.hnn(z_half)
             dH_dp = torch.autograd.grad(H_half.sum(), p_half, create_graph=True)[0]
             q_next = q + dt * dH_dp
             
-            # Step 3: p_next = p_half - (dt / 2) * dH/dq(q_next, p_half)
+            # Step 3: p_next = (p_half - (dt / 2) * dH/dq2) / (1 + (dt / 2) * gamma)
             z_half2 = torch.cat([q_next, p_half], dim=-1)
             H_half2 = self.hnn(z_half2)
             dH_dq2 = torch.autograd.grad(H_half2.sum(), q_next, create_graph=True)[0]
-            p_next = p_half - (dt / 2.0) * dH_dq2
+            p_next = (p_half - (dt / 2.0) * dH_dq2) / (1.0 + (dt / 2.0) * gamma)
             
             z_next = torch.cat([q_next, p_next], dim=-1)
             

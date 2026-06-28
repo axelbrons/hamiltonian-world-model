@@ -27,9 +27,10 @@ class HNN(nn.Module):
         return self.net_q(q) + self.net_p(p)
 
 class HNN_ODE(nn.Module):
-    def __init__(self, hnn):
+    def __init__(self, hnn, parent_model=None):
         super(HNN_ODE, self).__init__()
         self.hnn = hnn
+        self.parent_model = parent_model
         
     def forward(self, t, x):
         # x is [batch, 2*d]
@@ -42,13 +43,19 @@ class HNN_ODE(nn.Module):
             
         # x = [q, p]
         # dq/dt = dH/dp
-        # dp/dt = -dH/dq
+        # dp/dt = -dH/dq - gamma * p
         d = x.shape[-1] // 2
         
         dH_dq = grad_H[:, :d]
         dH_dp = grad_H[:, d:]
         
         dq_dt = dH_dp
-        dp_dt = -dH_dq
+        
+        if self.parent_model is not None and hasattr(self.parent_model, 'gamma'):
+            p = x[:, d:]
+            gamma = torch.abs(self.parent_model.gamma)
+            dp_dt = -dH_dq - gamma * p
+        else:
+            dp_dt = -dH_dq
         
         return torch.cat([dq_dt, dp_dt], dim=-1)

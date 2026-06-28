@@ -49,20 +49,23 @@ def visualize():
     num_steps = seq_len - 2 # 148 predictions
     
     preds_all = []
+    z_all = []
     current_x = torch.cat([batch[:, 0], batch[:, 1], batch[:, 2]], dim=1) # [1, 9, 32, 32]
     t_block = torch.linspace(0., (block_len - 1) * 0.2, block_len).to(device)
     
     with torch.no_grad():
         for b in range(num_blocks):
             # Predict block_len frames from current context (passive Leapfrog integration)
-            preds_block_logits, _, _ = model(current_x, t_block)
+            preds_block_logits, _, z_block = model(current_x, t_block)
             preds_block = torch.sigmoid(preds_block_logits)
             
             # Slice to avoid duplicates at block boundaries
             if b == 0:
                 preds_all.append(preds_block) # [8, 1, 3, 32, 32]
+                z_all.append(z_block) # [8, 1, 2]
             else:
                 preds_all.append(preds_block[1:]) # [7, 1, 3, 32, 32]
+                z_all.append(z_block[1:]) # [7, 1, 2]
                 
             if b < num_blocks - 1:
                 # Recalibrate: take last 3 predicted frames of the current block
@@ -131,6 +134,29 @@ def visualize():
     plt.legend(); plt.grid(True, alpha=0.3)
     plt.savefig('simple_pendulum_trajectory.png')
     print("Trajectory results saved to simple_pendulum_trajectory.png.")
+
+    # --- Plot Latent Phase Space (q vs p) ---
+    z_all_tensor = torch.cat(z_all, dim=0) # [148, 1, 2]
+    q_vals = z_all_tensor[:, 0, 0].cpu().numpy()
+    p_vals = z_all_tensor[:, 0, 1].cpu().numpy()
+    
+    plt.figure(figsize=(6, 6))
+    plt.plot(q_vals, p_vals, 'b-', label='Trajectoire Latente', alpha=0.8)
+    plt.scatter(q_vals[0], p_vals[0], c='green', marker='o', s=80, label='Début (t=0)', zorder=5)
+    plt.scatter(q_vals[-1], p_vals[-1], c='red', marker='x', s=80, label='Fin (t=T)', zorder=5)
+    # Draw arrows to show direction of motion
+    step = max(1, len(q_vals) // 8)
+    for idx in range(0, len(q_vals) - 1, step):
+        plt.annotate('', xy=(q_vals[idx+1], p_vals[idx+1]), xytext=(q_vals[idx], p_vals[idx]),
+                     arrowprops=dict(arrowstyle="->", color='blue', lw=1.5))
+                     
+    plt.xlabel('Position Latente q')
+    plt.ylabel('Moment Latent p')
+    plt.title('Espace des Phases Latent Appris (q vs p)')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.savefig('simple_pendulum_latent_phase_space.png')
+    print("Latent phase space portrait saved to simple_pendulum_latent_phase_space.png.")
 
 if __name__ == '__main__':
     visualize()
