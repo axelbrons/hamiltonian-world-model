@@ -11,15 +11,25 @@ def train():
 
     # Hyperparameters for simple pendulum
     num_epochs = 40
-    batch_size = 16
+    batch_size = 64
     learning_rate = 1e-3
     seq_len = 10
     latent_dim = 1 # 1 for q, 1 for p = 2D phase space
     dt = 0.2
     
-    print("Generating simple pendulum dataset...")
-    dataset = SimplePendulumDataset(num_sequences=1500, seq_len=seq_len, img_size=32)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    # Cache dataset to avoid slow procedural generation on every run
+    import os
+    dataset_path = f'simple_pendulum_dataset_seq{seq_len}_num1500.pt'
+    if os.path.exists(dataset_path):
+        print(f"Loading cached simple pendulum dataset from {dataset_path}...")
+        dataset = torch.load(dataset_path, map_location='cpu', weights_only=False)
+    else:
+        print("Generating simple pendulum dataset (this may take a minute)...")
+        dataset = SimplePendulumDataset(num_sequences=1500, seq_len=seq_len, img_size=32)
+        torch.save(dataset, dataset_path)
+        print(f"Dataset cached at {dataset_path}")
+        
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, pin_memory=(device.type == 'cuda'))
     
     model = PhysicsWorldModel(in_channels=9, out_channels=3, latent_dim=latent_dim).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)

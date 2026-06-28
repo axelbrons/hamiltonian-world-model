@@ -60,9 +60,8 @@ class PhysicsWorldModel(nn.Module):
             
         return z_next
 
-    def integrate_leapfrog(self, z0, t):
+    def integrate_leapfrog(self, z0, t, sub_steps=2):
         dt = (t[1] - t[0]).item()
-        sub_steps = 4
         sub_dt = dt / sub_steps
         
         z_t = [z0]
@@ -75,13 +74,13 @@ class PhysicsWorldModel(nn.Module):
             
         return torch.stack(z_t, dim=0)
 
-    def forward(self, x, t, solver='leapfrog'):
+    def forward(self, x, t, solver='leapfrog', sub_steps=2):
         # 1. Encode to initial state z0 = [q0, p0]
         z0 = self.encode(x)
         
         # 2. Integrate using Selected Solver
         if solver == 'leapfrog':
-            z_t = self.integrate_leapfrog(z0, t)
+            z_t = self.integrate_leapfrog(z0, t, sub_steps=sub_steps)
         else:
             z_t = odeint(self.ode_func, z0, t, method='rk4', options={'step_size': 0.05})
         
