@@ -22,7 +22,7 @@ def visualize():
     theta_dot = np.random.uniform(-2.0, 2.0)
     env.unwrapped.state = np.array([theta, theta_dot], dtype=np.float32)
     
-    seq_len = 21 # 3 initial frames + 21 blocks of 7 predictions (with overlap) = 150 frames total
+    seq_len = 150 # 3 initial frames + 21 blocks of 7 predictions (with overlap) = 150 frames total
     full_seq = []
     for _ in range(seq_len):
         img = env.render()

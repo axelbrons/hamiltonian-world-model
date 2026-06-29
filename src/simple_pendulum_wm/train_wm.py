@@ -13,7 +13,7 @@ def train():
     num_epochs = 40
     batch_size = 64
     learning_rate = 1e-3
-    seq_len = 10
+    seq_len = 30
     latent_dim = 1 # 1 for q, 1 for p = 2D phase space
     dt = 0.2
     
@@ -55,7 +55,7 @@ def train():
             targets = batch[:, 2:].transpose(0, 1)
             
             # Preds shape: (T_pred, B, 3, 32, 32)
-            preds, z0, z_t = model(x_in, t)
+            preds, z0, z_t = model(x_in, t, sub_steps=1)
             
             recon_loss = criterion(preds, targets)
             
