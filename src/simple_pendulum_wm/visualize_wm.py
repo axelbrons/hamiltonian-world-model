@@ -73,6 +73,11 @@ def visualize():
                 frame_second = preds_block[-2]
                 frame_third = preds_block[-1]
                 
+                # Apply thresholding to remove sigmoid background blur/glow and match encoder's training distribution
+                frame_first = torch.where(frame_first < 0.2, torch.zeros_like(frame_first), frame_first)
+                frame_second = torch.where(frame_second < 0.2, torch.zeros_like(frame_second), frame_second)
+                frame_third = torch.where(frame_third < 0.2, torch.zeros_like(frame_third), frame_third)
+                
                 # Stack them to form the input for the next block
                 current_x = torch.cat([frame_first, frame_second, frame_third], dim=1)
                 

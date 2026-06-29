@@ -65,11 +65,10 @@ def train():
             dq = q_t[1:] - q_t[:-1]
             loss_cc = torch.mean((p_t[:-1] - (dq / dt))**2)
             
-            # Energy Loss
-            H_t = model.hnn(z_t)
-            loss_energy = torch.mean(torch.diff(H_t, dim=0)**2)
-            
-            total_loss = recon_loss + lambda_phys * (loss_cc + loss_energy)
+            # Note: We do not penalize energy conservation (loss_energy) here because the system 
+            # is dissipative (friction). Forcing energy conservation on a damped system 
+            # forces the Hamiltonian to be flat, which collapses the gradients to 0 and freezes the model.
+            total_loss = recon_loss + lambda_phys * loss_cc
             
             total_loss.backward()
             optimizer.step()
