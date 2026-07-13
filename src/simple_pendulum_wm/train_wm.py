@@ -13,7 +13,7 @@ def train():
     num_epochs = 40
     batch_size = 64
     learning_rate = 1e-3
-    seq_len = 30
+    seq_len = 50
     latent_dim = 1 # 1 for q, 1 for p = 2D phase space
     dt = 0.2
     

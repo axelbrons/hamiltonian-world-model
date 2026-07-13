@@ -83,22 +83,23 @@ def visualize():
                 
         preds = torch.cat(preds_all, dim=0) # [148, 1, 3, 32, 32]
 
-    # Plot 10 evenly-spaced predictions across the entire sequence (showing damping over time)
-    num_cols = 10
-    indices_to_show = np.linspace(0, num_steps - 1, num_cols, dtype=int)
-    fig, axes = plt.subplots(2, num_cols, figsize=(18, 5))
+    # Plot specific steps: T=1, T=5, T=10, T=30, T=100 (mapping to prediction indices 0, 4, 9, 29, 99)
+    target_steps = [1, 5, 10, 30, 100]
+    indices_to_show = [t_step - 1 for t_step in target_steps]
+    num_cols = len(target_steps)
+    fig, axes = plt.subplots(2, num_cols, figsize=(12, 5))
     
     for idx, i in enumerate(indices_to_show):
-        # GT
+        # GT (first prediction starts at batch index 2)
         gt = batch[0, i+2].cpu().permute(1, 2, 0).numpy()
         axes[0, idx].imshow(gt)
-        axes[0, idx].set_title(f"GT T+{i+2}")
+        axes[0, idx].set_title(f"GT T={target_steps[idx]}")
         axes[0, idx].axis('off')
 
         # Pred
         pred = preds[i, 0].cpu().permute(1, 2, 0).numpy()
         axes[1, idx].imshow(pred)
-        axes[1, idx].set_title(f"Pred")
+        axes[1, idx].set_title(f"Pred T={target_steps[idx]}")
         axes[1, idx].axis('off')
 
     plt.tight_layout()
