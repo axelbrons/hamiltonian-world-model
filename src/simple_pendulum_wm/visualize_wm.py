@@ -83,25 +83,39 @@ def visualize():
                 
         preds = torch.cat(preds_all, dim=0) # [148, 1, 3, 32, 32]
 
-    # Plot specific steps: T=1, T=5, T=10, T=30, T=100 (mapping to prediction indices 0, 4, 9, 29, 99)
-    target_steps = [1, 5, 10, 30, 100]
-    indices_to_show = [t_step - 1 for t_step in target_steps]
-    num_cols = len(target_steps)
-    fig, axes = plt.subplots(2, num_cols, figsize=(12, 5))
+    # Plot dense grid: T=1 to T=50 (5 blocks of 10 steps each, with GT and Pred rows paired)
+    num_steps_to_plot = 50
+    steps_per_row = 10
+    num_blocks_plot = num_steps_to_plot // steps_per_row  # 5 blocks
     
-    for idx, i in enumerate(indices_to_show):
-        # GT (first prediction starts at batch index 2)
-        gt = batch[0, i+2].cpu().permute(1, 2, 0).numpy()
-        axes[0, idx].imshow(gt)
-        axes[0, idx].set_title(f"GT T={target_steps[idx]}")
-        axes[0, idx].axis('off')
-
-        # Pred
-        pred = preds[i, 0].cpu().permute(1, 2, 0).numpy()
-        axes[1, idx].imshow(pred)
-        axes[1, idx].set_title(f"Pred T={target_steps[idx]}")
-        axes[1, idx].axis('off')
-
+    fig, axes = plt.subplots(num_blocks_plot * 2, steps_per_row, figsize=(15, 12))
+    
+    for block in range(num_blocks_plot):
+        for col in range(steps_per_row):
+            t_step = block * steps_per_row + col + 1  # 1 to 50
+            i = t_step - 1  # prediction index
+            
+            # Row index for GT and Pred
+            gt_row = block * 2
+            pred_row = block * 2 + 1
+            
+            # GT (first prediction starts at batch index 2)
+            gt = batch[0, i+2].cpu().permute(1, 2, 0).numpy()
+            axes[gt_row, col].imshow(gt)
+            if col == 0:
+                axes[gt_row, col].set_ylabel("GT", fontsize=12, fontweight='bold')
+            axes[gt_row, col].set_title(f"T={t_step}", fontsize=8)
+            axes[gt_row, col].set_xticks([])
+            axes[gt_row, col].set_yticks([])
+            
+            # Pred
+            pred = preds[i, 0].cpu().permute(1, 2, 0).numpy()
+            axes[pred_row, col].imshow(pred)
+            if col == 0:
+                axes[pred_row, col].set_ylabel("Pred", fontsize=12, fontweight='bold')
+            axes[pred_row, col].set_xticks([])
+            axes[pred_row, col].set_yticks([])
+            
     plt.tight_layout()
     plt.savefig('simple_pendulum_result.png')
     print("Reconstruction results saved to simple_pendulum_result.png.")
