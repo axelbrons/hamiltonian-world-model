@@ -42,8 +42,6 @@ def train():
     print("Starting training...")
     for epoch in range(num_epochs):
         epoch_loss = 0.0
-        # Physics loss scheduling (warm up for 5 epochs)
-        lambda_phys = 0.1 if epoch > 5 else 0.0
         
         for batch in dataloader:
             batch = batch.to(device)
@@ -57,18 +55,10 @@ def train():
             # Preds shape: (T_pred, B, 3, 32, 32)
             preds, z0, z_t = model(x_in, t, sub_steps=1)
             
-            recon_loss = criterion(preds, targets)
-            
-            # Coordinate Consistency Loss
-            q_t = z_t[:, :, :latent_dim]
-            p_t = z_t[:, :, latent_dim:]
-            dq = q_t[1:] - q_t[:-1]
-            loss_cc = torch.mean((p_t[:-1] - (dq / dt))**2)
-            
-            # Note: We do not penalize energy conservation (loss_energy) here because the system 
-            # is dissipative (friction). Forcing energy conservation on a damped system 
-            # forces the Hamiltonian to be flat, which collapses the gradients to 0 and freezes the model.
-            total_loss = recon_loss + lambda_phys * loss_cc
+            # Simple reconstruction loss (BCE with logits) as in standard Neural ODE / HNN papers.
+            # The Hamiltonian structure is enforced by construction inside the model architecture
+            # and the symplectic Leapfrog solver, so no auxiliary physics loss is needed.
+            total_loss = criterion(preds, targets)
             
             total_loss.backward()
             optimizer.step()
