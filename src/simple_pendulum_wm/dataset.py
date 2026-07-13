@@ -17,9 +17,9 @@ class SimplePendulumDataset(Dataset):
         for i in range(self.num_sequences):
             env.reset()
             
-            # Random initial state for simple pendulum: theta in [-pi, pi], theta_dot in [-2.0, 2.0]
+            # Random initial state: theta in [-pi, pi], theta_dot in [-8.0, 8.0] (wider range to cover all swing speeds)
             theta = np.random.uniform(-np.pi, np.pi)
-            theta_dot = np.random.uniform(-2.0, 2.0)
+            theta_dot = np.random.uniform(-8.0, 8.0)
             env.unwrapped.state = np.array([theta, theta_dot], dtype=np.float32)
 
             seq = []

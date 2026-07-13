@@ -19,7 +19,7 @@ def train():
     
     # Cache dataset to avoid slow procedural generation on every run
     import os
-    dataset_path = f'simple_pendulum_dataset_seq{seq_len}_num1500.pt'
+    dataset_path = f'simple_pendulum_dataset_seq{seq_len}_num1500_diverse.pt'
     if os.path.exists(dataset_path):
         print(f"Loading cached simple pendulum dataset from {dataset_path}...")
         dataset = torch.load(dataset_path, map_location='cpu', weights_only=False)
@@ -47,17 +47,26 @@ def train():
             batch = batch.to(device)
             optimizer.zero_grad()
             
-            # Input is the first 3 frames stacked
-            x_in = torch.cat([batch[:, 0], batch[:, 1], batch[:, 2]], dim=1)
-            # Targets are frames 2 to seq_len-1
-            targets = batch[:, 2:].transpose(0, 1)
+            # Random temporal slicing: choose a random window of length 15
+            # (3 context frames + 12 prediction targets) from the 50-frame sequence.
+            # This exposes the encoder to intermediate high-velocity frames and stabilizes training.
+            window_len = 15
+            import numpy as np
+            t0 = np.random.randint(0, seq_len - window_len + 1)
+            batch_slice = batch[:, t0 : t0 + window_len]
+            
+            # Input is the first 3 frames of the slice stacked
+            x_in = torch.cat([batch_slice[:, 0], batch_slice[:, 1], batch_slice[:, 2]], dim=1)
+            # Targets are frames 2 to window_len-1 of the slice
+            targets = batch_slice[:, 2:].transpose(0, 1)
+            
+            # Integrate over the corresponding slice time grid
+            t_slice = t[: window_len - 2]
             
             # Preds shape: (T_pred, B, 3, 32, 32)
-            preds, z0, z_t = model(x_in, t, sub_steps=1)
+            preds, z0, z_t = model(x_in, t_slice, sub_steps=1)
             
             # Simple reconstruction loss (BCE with logits) as in standard Neural ODE / HNN papers.
-            # The Hamiltonian structure is enforced by construction inside the model architecture
-            # and the symplectic Leapfrog solver, so no auxiliary physics loss is needed.
             total_loss = criterion(preds, targets)
             
             total_loss.backward()
