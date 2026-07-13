@@ -13,18 +13,20 @@ class HNN(nn.Module):
             nn.Tanh(),
             nn.Linear(hidden_dim, 1) # Potential energy V(q)
         )
-        self.net_p = nn.Sequential(
-            nn.Linear(self.d, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, 1) # Kinetic energy T(p)
-        )
+        # Initialize final layer of net_q to 0.
+        # This ensures a flat initial potential energy landscape to prevent chaotic
+        # dynamics at start and avoid black image collapse.
+        nn.init.zeros_(self.net_q[-1].weight)
+        nn.init.zeros_(self.net_q[-1].bias)
     
     def forward(self, x):
         q = x[..., :self.d]
         p = x[..., self.d:]
-        return self.net_q(q) + self.net_p(p)
+        # Quadratic kinetic energy T(p) = 0.5 * p^2
+        # This guarantees dH/dp = p (meaning velocity dq/dt = p) and prevents gradient explosion.
+        V = self.net_q(q)
+        T = 0.5 * torch.sum(p**2, dim=-1, keepdim=True)
+        return V + T
 
 class HNN_ODE(nn.Module):
     def __init__(self, hnn, parent_model=None):
