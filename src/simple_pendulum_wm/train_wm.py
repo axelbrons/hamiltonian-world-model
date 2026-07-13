@@ -19,7 +19,7 @@ def train():
     
     # Cache dataset to avoid slow procedural generation on every run
     import os
-    dataset_path = f'simple_pendulum_dataset_seq{seq_len}_num1500_diverse.pt'
+    dataset_path = f'simple_pendulum_dataset_seq{seq_len}_num1500_diverse_energy.pt'
     if os.path.exists(dataset_path):
         print(f"Loading cached simple pendulum dataset from {dataset_path}...")
         dataset = torch.load(dataset_path, map_location='cpu', weights_only=False)

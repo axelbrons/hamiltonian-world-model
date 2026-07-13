@@ -29,12 +29,9 @@ class HNN(nn.Module):
         return V + T
 
 class HNN_ODE(nn.Module):
-    def __init__(self, hnn, parent_model=None):
+    def __init__(self, hnn):
         super(HNN_ODE, self).__init__()
         self.hnn = hnn
-        # Wrap parent_model in a list to prevent PyTorch from registering it as a submodule
-        # which would cause a circular dependency and RecursionError on model.to(device).
-        self.parent_model_list = [parent_model]
         
     def forward(self, t, x):
         # x is [batch, 2*d]
@@ -47,20 +44,13 @@ class HNN_ODE(nn.Module):
             
         # x = [q, p]
         # dq/dt = dH/dp
-        # dp/dt = -dH/dq - gamma * p
+        # dp/dt = -dH/dq
         d = x.shape[-1] // 2
         
         dH_dq = grad_H[:, :d]
         dH_dp = grad_H[:, d:]
         
         dq_dt = dH_dp
-        
-        parent_model = self.parent_model_list[0]
-        if parent_model is not None and hasattr(parent_model, 'gamma'):
-            p = x[:, d:]
-            gamma = torch.abs(parent_model.gamma)
-            dp_dt = -dH_dq - gamma * p
-        else:
-            dp_dt = -dH_dq
+        dp_dt = -dH_dq
         
         return torch.cat([dq_dt, dp_dt], dim=-1)

@@ -15,12 +15,18 @@ class SimplePendulumDataset(Dataset):
         env = gym.make('Pendulum-v1', render_mode='rgb_array')
         data = []
         for i in range(self.num_sequences):
-            env.reset()
-            
-            # Random initial state: theta in [-pi, pi], theta_dot in [-8.0, 8.0] (wider range to cover all swing speeds)
-            theta = np.random.uniform(-np.pi, np.pi)
-            theta_dot = np.random.uniform(-8.0, 8.0)
-            env.unwrapped.state = np.array([theta, theta_dot], dtype=np.float32)
+            # Rejection sampling to ensure the pendulum has enough mechanical energy to swing actively
+            while True:
+                env.reset()
+                theta = np.random.uniform(-np.pi, np.pi)
+                theta_dot = np.random.uniform(-8.0, 8.0)
+                
+                # Mechanical energy: E = 0.5 * theta_dot^2 - 10 * cos(theta)
+                energy = 0.5 * (theta_dot ** 2) - 10.0 * np.cos(theta)
+                # Filter out low-energy states (E < -5.0) where the pendulum barely moves
+                if energy > -5.0:
+                    env.unwrapped.state = np.array([theta, theta_dot], dtype=np.float32)
+                    break
 
             seq = []
             for _ in range(self.seq_len):
