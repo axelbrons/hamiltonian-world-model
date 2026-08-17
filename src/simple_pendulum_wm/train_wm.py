@@ -33,6 +33,7 @@ def train():
     
     model = PhysicsWorldModel(in_channels=9, out_channels=3, latent_dim=latent_dim).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=1e-5)
     
     # Weighted BCE to handle background sparsity
     criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([5.0]).to(device))
@@ -47,10 +48,9 @@ def train():
             batch = batch.to(device)
             optimizer.zero_grad()
             
-            # Random temporal slicing: choose a random window of length 15
-            # (3 context frames + 12 prediction targets) from the 50-frame sequence.
-            # This exposes the encoder to intermediate high-velocity frames and stabilizes training.
-            window_len = 15
+            # Random temporal slicing: choose a random window of length 20
+            # (3 context frames + 17 prediction targets) from the 50-frame sequence.
+            window_len = 20
             import numpy as np
             t0 = np.random.randint(0, seq_len - window_len + 1)
             batch_slice = batch[:, t0 : t0 + window_len]
@@ -74,8 +74,11 @@ def train():
             
             epoch_loss += total_loss.item()
             
+        scheduler.step()
+        
         if (epoch + 1) % 5 == 0 or epoch == 0:
-            print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss/len(dataloader):.4f}")
+            current_lr = scheduler.get_last_lr()[0]
+            print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss/len(dataloader):.4f}, LR: {current_lr:.6f}")
 
     torch.save(model.state_dict(), 'simple_pendulum_weights.pth')
     print("Model saved to simple_pendulum_weights.pth.")
