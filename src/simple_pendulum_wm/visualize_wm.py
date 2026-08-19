@@ -11,7 +11,7 @@ def visualize():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     img_size = 32
     in_channels = 9
-    latent_dim = 1
+    latent_dim = 2
 
     # Generate a single test sequence using Gymnasium Pendulum-v1 (passive, with friction)
     env = gym.make('Pendulum-v1', render_mode='rgb_array')
@@ -155,26 +155,44 @@ def visualize():
     plt.savefig('simple_pendulum_trajectory.png')
     print("Trajectory results saved to simple_pendulum_trajectory.png.")
 
-    # --- Plot Latent Phase Space (q vs p) ---
-    z_all_tensor = torch.cat(z_all, dim=0) # [148, 1, 2]
-    q_vals = z_all_tensor[:, 0, 0].cpu().numpy()
-    p_vals = z_all_tensor[:, 0, 1].cpu().numpy()
+    # --- Plot Latent Space (q1 vs q2 and q1 vs p1) ---
+    z_all_tensor = torch.cat(z_all, dim=0) # [num_steps, 1, 2*latent_dim]
+    q1 = z_all_tensor[:, 0, 0].cpu().numpy()
+    q2 = z_all_tensor[:, 0, 1].cpu().numpy()
+    p1 = z_all_tensor[:, 0, 2].cpu().numpy()
+    p2 = z_all_tensor[:, 0, 3].cpu().numpy()
     
-    plt.figure(figsize=(6, 6))
-    plt.plot(q_vals, p_vals, 'b-', label='Trajectoire Latente', alpha=0.8)
-    plt.scatter(q_vals[0], p_vals[0], c='green', marker='o', s=80, label='Début (t=0)', zorder=5)
-    plt.scatter(q_vals[-1], p_vals[-1], c='red', marker='x', s=80, label='Fin (t=T)', zorder=5)
-    # Draw arrows to show direction of motion
-    step = max(1, len(q_vals) // 8)
-    for idx in range(0, len(q_vals) - 1, step):
-        plt.annotate('', xy=(q_vals[idx+1], p_vals[idx+1]), xytext=(q_vals[idx], p_vals[idx]),
-                     arrowprops=dict(arrowstyle="->", color='blue', lw=1.5))
-                     
-    plt.xlabel('Position Latente q')
-    plt.ylabel('Moment Latent p')
-    plt.title('Espace des Phases Latent Appris (q vs p)')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    
+    # 1. Configuration space (q1 vs q2) -> Cartesien (x, y) = (sin theta, -cos theta)
+    axes[0].plot(q1, q2, 'b-', label='Trajectoire Latente (q1, q2)', alpha=0.8)
+    axes[0].scatter(q1[0], q2[0], c='green', marker='o', s=80, label='Début (t=0)', zorder=5)
+    axes[0].scatter(q1[-1], q2[-1], c='red', marker='x', s=80, label='Fin (t=T)', zorder=5)
+    step = max(1, len(q1) // 8)
+    for idx in range(0, len(q1) - 1, step):
+        axes[0].annotate('', xy=(q1[idx+1], q2[idx+1]), xytext=(q1[idx], q2[idx]),
+                         arrowprops=dict(arrowstyle="->", color='blue', lw=1.5))
+    axes[0].set_xlabel('Position Latente q1')
+    axes[0].set_ylabel('Position Latente q2')
+    axes[0].set_title('Espace de Configuration (q1 vs q2)')
+    axes[0].legend()
+    axes[0].grid(True, alpha=0.3)
+    axes[0].axis('equal')
+    
+    # 2. Phase space (q1 vs p1)
+    axes[1].plot(q1, p1, 'm-', label='Espace des phases (q1, p1)', alpha=0.8)
+    axes[1].scatter(q1[0], p1[0], c='green', marker='o', s=80, label='Début (t=0)', zorder=5)
+    axes[1].scatter(q1[-1], p1[-1], c='red', marker='x', s=80, label='Fin (t=T)', zorder=5)
+    for idx in range(0, len(q1) - 1, step):
+        axes[1].annotate('', xy=(q1[idx+1], p1[idx+1]), xytext=(q1[idx], p1[idx]),
+                         arrowprops=dict(arrowstyle="->", color='purple', lw=1.5))
+    axes[1].set_xlabel('Position Latente q1')
+    axes[1].set_ylabel('Moment Latent p1')
+    axes[1].set_title('Espace des Phases Latent (q1 vs p1)')
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
     plt.savefig('simple_pendulum_latent_phase_space.png')
     print("Latent phase space portrait saved to simple_pendulum_latent_phase_space.png.")
 

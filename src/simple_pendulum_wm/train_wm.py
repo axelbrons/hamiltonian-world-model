@@ -10,11 +10,11 @@ def train():
     print(f"Using device: {device}")
 
     # Hyperparameters for simple pendulum
-    num_epochs = 40
+    num_epochs = 150
     batch_size = 64
     learning_rate = 1e-3
     seq_len = 50
-    latent_dim = 1 # 1 for q, 1 for p = 2D phase space
+    latent_dim = 2 # 2 for q, 2 for p = 4D phase space (smooth S1 embedding in R2)
     dt = 0.2
     
     # Cache dataset to avoid slow procedural generation on every run
