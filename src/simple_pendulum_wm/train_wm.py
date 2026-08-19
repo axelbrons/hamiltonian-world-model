@@ -9,10 +9,10 @@ def train():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
-    # Hyperparameters for simple pendulum
+    # Hyperparameters for simple pendulum (4D phase space)
     num_epochs = 150
     batch_size = 64
-    learning_rate = 1e-3
+    learning_rate = 1e-3 # Standard learning rate for training from scratch
     seq_len = 50
     latent_dim = 2 # 2 for q, 2 for p = 4D phase space (smooth S1 embedding in R2)
     dt = 0.2
@@ -32,6 +32,16 @@ def train():
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, pin_memory=(device.type == 'cuda'))
     
     model = PhysicsWorldModel(in_channels=9, out_channels=3, latent_dim=latent_dim).to(device)
+    
+    # Resume from checkpoint if it exists
+    weights_path = 'simple_pendulum_weights.pth'
+    if os.path.exists(weights_path):
+        try:
+            model.load_state_dict(torch.load(weights_path, map_location=device))
+            print(f"Loaded pretrained weights from {weights_path} to resume training.")
+        except Exception as e:
+            print(f"Starting training from scratch ({e})")
+            
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=1e-5)
     
@@ -64,7 +74,7 @@ def train():
             t_slice = t[: window_len - 2]
             
             # Preds shape: (T_pred, B, 3, 32, 32)
-            preds, z0, z_t = model(x_in, t_slice, sub_steps=1)
+            preds, z0, z_t = model(x_in, t_slice, sub_steps=2)
             
             # Simple reconstruction loss (BCE with logits) as in standard Neural ODE / HNN papers.
             total_loss = criterion(preds, targets)
