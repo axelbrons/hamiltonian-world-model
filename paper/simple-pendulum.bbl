@@ -1,0 +1,33 @@
+\begin{thebibliography}{1}
+
+\bibitem{chen2018neural}
+Ricky T.~Q. Chen, Yulia Rubanova, Jesse Bettencourt, and David Duvenaud.
+\newblock Neural ordinary differential equations.
+\newblock In {\em Advances in Neural Information Processing Systems (NeurIPS)}, pages 6572--6583, 2018.
+
+\bibitem{cranmer2020lagrangian}
+Miles Cranmer, Sam Greydanus, Stephan Hoyer, Peter Battaglia, David Spergel, and Shirley Ho.
+\newblock Lagrangian neural networks.
+\newblock {\em arXiv preprint arXiv:2003.04630}, 2020.
+
+\bibitem{gymnasium_2025}
+Manuel Goul{\~a}o, Andreas Kallinteris, Markus Krimmel, Arjun KG, Rodrigo Perez-Vicente, Andrea Pierr{\'e}, Sander Schulhoff, Jun~Jet Tai, Hannah Tan, and Omar~G. Younis.
+\newblock Gymnasium: A standard interface for reinforcement learning environments.
+\newblock In {\em Advances in Neural Information Processing Systems (NeurIPS)}, 2025.
+
+\bibitem{greydanus2019hamiltonian}
+Sam Greydanus, Misko Dzamba, and Jason Yosinski.
+\newblock Hamiltonian neural networks.
+\newblock In {\em Advances in Neural Information Processing Systems (NeurIPS)}, volume~32, pages 15379--15389, 2019.
+
+\bibitem{ha2018worldmodels}
+David Ha and J{\"{u}}rgen Schmidhuber.
+\newblock Recurrent world models facilitate policy evolution.
+\newblock In {\em Advances in Neural Information Processing Systems 31}, pages 2451--2463. 2018.
+
+\bibitem{hairer2006geometric}
+Ernst Hairer, Christian Lubich, and Gerhard Wanner.
+\newblock {\em Geometric Numerical Integration: Structure-Preserving Algorithms for Ordinary Differential Equations}.
+\newblock Springer Science \& Business Media, 2006.
+
+\end{thebibliography}

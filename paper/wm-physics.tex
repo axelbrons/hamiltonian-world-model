@@ -1,4 +1,5 @@
 \documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[french]{babel}
 \usepackage{amsmath, amssymb, amsfonts}
@@ -11,7 +12,7 @@
 
 %\setlength{\parindent}{0pt}
 
-\title{Apprentissage Continu des Dynamiques d'un Double Pendule par World Model Hamiltonien Constraint}
+\title{Apprentissage Continu des Dynamiques d'un Pendule Simple par World Model Hamiltonien}
 \author{Axel Bröns}
 \date{\today}
 
@@ -20,18 +21,18 @@
 \maketitle
 %
 % \begin{abstract}
-% Ce papier présente une approche de World Model continu pour la prédiction de l'état d'un double pendule (système chaotique type \texttt{Acrobot-v1}) directement à partir de pixels. Le modèle combine un auto-encodeur convolutif pour la perception visuelle, un réseau de neurones hamiltonien (HNN) pour capturer les lois de conservation d'énergie physique, et un intégrateur d'équations différentielles ordinaires (Neural ODE) pour la modélisation en temps continu. Pour forcer l'apprentissage de variables latentes physiquement interprétables (positions et moments canoniques), j'introduis des fonctions de coût de cohérence des coordonnées et de conservation d'énergie. Les résultats montrent que cette approche conserve mieux l'énergie à long terme et apprend un espace de phase structuré cohérent avec la mécanique classique.
+% Ce papier présente une approche de World Model continu pour la prédiction de l'état d'un pendule simple directement à partir de pixels. Le modèle combine un auto-encodeur convolutif pour la perception visuelle, un réseau de neurones hamiltonien (HNN) pour capturer les lois de conservation d'énergie physique, et un intégrateur d'équations différentielles ordinaires (Neural ODE) pour la modélisation en temps continu. Pour forcer l'apprentissage de variables latentes physiquement interprétables (positions et moments canoniques), j'introduis des fonctions de coût de cohérence des coordonnées et de conservation d'énergie. Les résultats montrent que cette approche conserve mieux l'énergie à long terme et apprend un espace de phase structuré cohérent avec la mécanique classique.
 % \end{abstract}
 
 \section{Introduction}
 \label{sec:intro}
-On aperçoit le succès des World Models à travers de plusieurs papiers remarquables comme par exemple la famille des JEPA et LeWorldModel de Yann Le Cun. Le problème notable de ces modèles est l'apprentissage des dynamiques de transitions en temps discret sans contraintes physiques (qui est très important en robotique de précisions ou prévisions précises). Les trajectoires peuvent alors devenir irréalistes sur des systèmes physiques rigides. Ainsi mon approche vise à implémenter les principes fondamentaux de physique (mécanique hamiltonienne) avec la perception visuelle d'un World Model tout en modélisant de manière continu à l'aide des Neural ODEs. Dans cette étude, on va principalement se concentrer sur le double pendule (Acrobot-v1 de Gymnasium) qui est un système totalement chaotiques et non-linéaire qui est un réel challenge et cool à prédire ! Le système peut très bien changer, et libre à vous de choisir votre meilleur environnement. Le but de ce papier est d'expliquer de manière claire l'intuition derrière cette approche et comprendre comment le modèle peut apprendre la physique qui nous entoure !
+On aperçoit le succès des World Models à travers de plusieurs papiers remarquables comme par exemple la famille des JEPA et LeWorldModel de Yann Le Cun. Le problème notable de ces modèles est l'apprentissage des dynamiques de transitions en temps discret sans contraintes physiques (qui est très important en robotique de précisions ou prévisions précises). Les trajectoires peuvent alors devenir irréalistes sur des systèmes physiques rigides. Ainsi mon approche vise à implémenter les principes fondamentaux de physique (mécanique hamiltonienne) avec la perception visuelle d'un World Model tout en modélisant de manière continue à l'aide des Neural ODEs. Dans cette étude, on va principalement se concentrer sur le pendule simple (\texttt{Pendulum-v1} de Gymnasium) qui est un système oscillant non-linéaire fondamental en physique et idéal pour valider les propriétés de conservation géométrique sans dérive. Le système peut très bien changer, et libre à vous de choisir votre meilleur environnement. Le but de ce papier est d'expliquer de manière claire l'intuition derrière cette approche et comprendre comment le modèle peut apprendre la physique qui nous entoure !
 
 % \begin{itemize}
 %     \item \textbf{Contexte :} Succès des modèles de monde (\textit{World Models}) \cite{ha2018worldmodels} dans l'apprentissage par renforcement visuel et la planification de trajectoires.
 %     \item \textbf{Problématique :} Les modèles de monde standards apprennent souvent des dynamiques de transition en temps discret sans contrainte physique. Cela peut mener à des dérives énergétiques ou des trajectoires irréalistes sur des systèmes physiques rigides.
 %     \item \textbf{Objectif de l'approche :} Combiner la perception visuelle à base de pixels avec des principes physiques fondamentaux (mécanique hamiltonienne) modélisés en temps continu à l'aide des Neural ODEs \cite{chen2018neural}.
-%     \item \textbf{Cas d'étude :} Le double pendule (Acrobot-v1 de Gymnasium \cite{gymnasium_2025}), un système non-linéaire et chaotique.
+%     \item \textbf{Cas d'étude :} Le pendule simple (Pendulum-v1 de Gymnasium \cite{gymnasium_2025}), un système non-linéaire régulier.
 % \end{itemize}
 
 \section{Mécanique Hamiltonienne}\label{sec:hamilton}
@@ -160,25 +161,23 @@ Ici, il suffit de prendre l'état de l'espace latent prédit $z(t+\Delta T)$, av
 Cette section détaille le protocole expérimental, le traitement des données, ainsi que les résultats qualitatifs et quantitatifs obtenus.
 
 \subsection{Génération du Dataset et Prétraitement}
-Concernant le jeu de données, j'ai utilisé l'environnement \texttt{Acrobot-v1} de la bibliothèque Gymnasium d'OpenAI. Le choix de ce système s'explique par la nature hautement chaotique et non-linéaire de la dynamique du double pendule passif, ce qui constitue un défi majeur pour la prédiction temporelle continue.
+Concernant le jeu de données, j'ai utilisé l'environnement \texttt{Pendulum-v1} de la bibliothèque Gymnasium d'OpenAI. Le choix de ce système s'explique par la nature périodique et non-linéaire de la dynamique du pendule simple passif, permettant d'évaluer avec précision la conservation d'énergie et la topologie de l'espace des phases sans l'interférence de forces externes.
 
 \paragraph{Prétraitement}
-Avant de commencer l'entraînement, plusieurs transformations sont appliquées aux images générées par le double pendule afin de faciliter l'entraînement de l'encodeur convolutionnel. Premièrement, les couleurs de l'image sont inversées pour obtenir un arrière-plan à prédominance noire (valeurs proches de $0.0$) et concentrer l'information sur le pendule lui-même. Deuxièmement, afin d'éliminer le bruit résiduel et d'accentuer la parcimonie du signal d'entrée, un filtre de seuillage est appliqué : tous les pixels d'intensité inférieure à $0.2$ sont ramenés à $0.0$.
-
+Avant de commencer l'entraînement, plusieurs transformations sont appliquées aux images générées par le pendule simple afin de faciliter l'entraînement de l'encodeur convolutionnel. Premièrement, les couleurs de l'image sont inversées pour obtenir un arrière-plan à prédominance noire (valeurs proches de $0.0$) et concentrer l'information sur le pendule lui-même. Deuxièmement, afin d'éliminer le bruit résiduel et d'accentuer la parcimonie du signal d'entrée, un filtre de seuillage est appliqué : tous les pixels d'intensité inférieure à $0.2$ sont ramenés à $0.0$.
 
 \paragraph{Entraînement}
-Concernant l'entraînement, j'ai choisis $N$ séquences (aux alentours de 1500-2000 séquences), toutes avec $T = 10$ frames de taille $32 \times 32$ avec $3$ canaux de couleur (RGB). Le but ici, est vraiment d'avoir une gamme diverse du mouvement de pendule pour qu'il puisse apprendre au mieux et ne pas apprendre un pendule statique. Pour permettre cette diversité, j'applique une action constante neutre (couple nul, correspondant à l'action 1 de l'environnement) à chaque pas de temps.
+Concernant l'entraînement, j'ai choisi $N = 1500$ séquences, toutes avec $T = 50$ frames de taille $32 \times 32$ avec $3$ canaux de couleur (RGB). Le but ici est vraiment d'avoir une gamme diverse du mouvement de pendule pour qu'il puisse apprendre au mieux et ne pas apprendre un pendule statique. Pour permettre cette diversité, nous appliquons un spectre large de vitesses initiales ($\dot{\theta} \in [-8.0, 8.0]$ rad/s) et un filtre par rejet d'énergie ($E \ge -5.0$) sous action passive nulle (couple nul $u=0$).
 
-
-% Le jeu de données est généré de manière procédurale à l'aide de l'environnement \texttt{Acrobot-v1} de la bibliothèque Gymnasium \cite{gymnasium_2025}. Le système simule un double pendule passif. Afin d'obtenir des trajectoires diverses, l'état initial du système $(\theta_1, \theta_2, \dot{\theta}_1, \dot{\theta}_2)$ est échantillonné de manière aléatoire uniforme. Pour s'assurer que le modèle n'apprend que la dynamique passive, nous appliquons une action constante neutre (couple nul, correspondant à l'action 1 de l'environnement) à chaque pas de temps.
+% Le jeu de données est généré de manière procédurale à l'aide de l'environnement \texttt{Pendulum-v1} de la bibliothèque Gymnasium \cite{gymnasium_2025}. Le système simule un pendule simple passif. Afin d'obtenir des trajectoires diverses, l'état initial du système $(\theta, \dot{\theta})$ est échantillonné de manière aléatoire uniforme. Pour s'assurer que le modèle n'apprend que la dynamique passive, nous appliquons une action constante neutre (couple nul) à chaque pas de temps.
 %
-% Chaque trajectoire contient $T = 10$ frames de taille $32 \times 32$ pixels avec 3 canaux de couleur (RGB). Les images brutes subissent les étapes de prétraitement suivantes :
+% Chaque trajectoire contient $T = 50$ frames de taille $32 \times 32$ pixels avec 3 canaux de couleur (RGB). Les images brutes subissent les étapes de prétraitement suivantes :
 % \begin{enumerate}
 %     \item \textbf{Inversion de couleur :} Le fond clair est inversé pour obtenir un fond noir (valeurs proches de $0.0$).
 %     \item \textbf{Seuillage :} Les pixels ayant une intensité inférieure à $0.2$ sont mis à $0.0$ afin de réduire le bruit de fond et de forcer la parcimonie de l'image.
 %     \item \textbf{Normalisation :} Les intensités de pixels sont ramenées dans la plage $[0.0, 1.0]$.
 % \end{enumerate}
-% Le jeu de données d'entraînement complet comprend $1000$ séquences ainsi prétraitées.
+% Le jeu de données d'entraînement complet comprend $1500$ séquences ainsi prétraitées.
 
 \subsection{Objectifs d'entraînement et régularisations physiques}
 \label{subsec:objectifs}
@@ -222,41 +221,67 @@ Pour éviter les contraintes physiques ne viennet perturber la phase initiale de
 %     \end{equation}
 % \end{itemize}
 
-\subsection{Résultats}
+\subsection{Résultats Expérimentaux}
 \label{subsec:results}
-Les résultats qualitatifs démontrent la capacité du modèle à projeter les observations visuelles dans l'espace des phases et à prédire les frames futures par intégration temporelle continue. Bien évidemment, on peut prédire à n'importe quel timeframe $T$. Voici les résultats d'un entraînement de 80 epochs sur 2000 séquences. La première ligne correspond au Ground Truth (le vrai pendule) et la ligne d'en bas correspond à la prédiction de mon modèle.
 
-% La Figure~\ref{fig:results} montre les reconstructions visuelles obtenues par le modèle pour une séquence de prédiction de 10 pas temporels ($T+2$ à $T+11$). Le modèle parvient à préserver la forme et la position des articulations du double pendule tout au long du déroulement temporel.
+Cette section détaille les performances empiriques obtenues par notre World Model Hamiltonien. L'évaluation porte conjointement sur la convergence des courbes d'apprentissage, la fidélité visuelle des prédictions sur long horizon, et la conservation de l'énergie physique totale du système.
+
+\subsubsection{Convergence et Courbes d'Apprentissage}
+L'entraînement a été conduit sur 150 époques avec une séparation stricte des données : 80\% d'entraînement (1200 séquences) et 20\% de validation indépendante (300 séquences non vues), en utilisant un ordonnanceur \textit{Cosine Annealing} décroissant de $10^{-3}$ à $10^{-5}$.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{../physics_wm_result.png}
-    \caption{Comparaison qualitative temporelle entre les observations réelles (GT, ligne du haut) et les prédictions générées par le décodeur du World Model à partir de la trajectoire latente intégrée par le HNN-ODE (Pred, ligne du bas) pour les pas de temps $T+2$ à $T+11$.}
+    \includegraphics[width=\linewidth]{images/simple_pendulum_learning_curves.png}
+    \caption{Courbes d'apprentissage sur 150 époques. À gauche : convergence conjointe de la perte d'entraînement (bleu) et de validation (rouge en pointillés). À droite : profil de décroissance du taux d'apprentissage par Cosine Annealing.}
+    \label{fig:learning_curves}
+\end{figure}
+
+Comme l'illustre la Figure~\ref{fig:learning_curves} :
+\begin{itemize}
+    \item \textbf{Convergence rapide et stable :} La perte chute drastiquement de $0.043$ à $0.018$ dès les 5 premières époques grâce à l'initialisation plate du potentiel ($V(q) \approx 0$), éliminant tout effondrement d'image noire (\textit{black image collapse}).
+    \item \textbf{Absence de sur-apprentissage et de sous-apprentissage :} La courbe de validation (rouge pointillée) suit rigoureusement la courbe d'entraînement (bleue). À l'époque 150, la perte se stabilise à $\mathcal{L}_{\text{train}} \approx 0.0135$ et $\mathcal{L}_{\text{val}} \approx 0.0155$ avec un écart infime ($\Delta < 0.002$), confirmant la régularisation physique optimale induite par le solveur symplectique.
+\end{itemize}
+
+\subsubsection{Fidélité des Prédictions Visuelles à Long Terme \texorpdfstring{($T=1$ à $T=50$)}{(T=1 à T=50)}}
+La Figure~\ref{fig:results} présente la comparaison visuelle détaillée, pas à pas, entre la vérité terrain (GT) et les prédictions du World Model (Pred) sur 50 pas temporels ($T=1$ à $T=50$, soit 2.5 secondes d'évolution continue).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{images/simple_pendulum_result.png}
+    \caption{Grille de prédiction temporelle dense pour les pas de temps $T=1$ à $T=50$. La ligne du haut présente la vérité terrain (GT) et la ligne du bas la prédiction du World Model (Pred). Les images restent nettes, synchronisées et sans dédoublement visuel jusqu'à $T=45$.}
     \label{fig:results}
 \end{figure}
 
-On note l'underfitting léger car il n'a pas réussi à totalement représenter le pendule de manière nette. Une des améliorations pour contrer ce problème serait de l'entraîner plus longtemps.
-
-
-Pour analyser plus précisément le comportement géométrique, la Figure~\ref{fig:trajectory} illustre le tracé continu de l'extrémité du double pendule dans l'espace image. La trajectoire prédite par l'intégration continue du Hamiltonien appris suit fidèlement la trajectoire réelle, démontrant que l'espace des phases latent conserve les propriétés topologiques fondamentales de l'Acrobot.
+Plusieurs points clés se dégagent :
+\begin{enumerate}
+    \item \textbf{Synchronisation temporelle rigoureuse :} Du pas $T=1$ au pas $T=45$, les orientations angulaires prédites épousent parfaitement la vérité terrain. Le modèle respecte fidèlement les accélérations au passage de la verticale basse, le ralentissement progressif lors de la remontée, et l'angle exact de retournement.
+    \item \textbf{Suppression des images fantômes :} L'utilisation d'un espace latent à 4 dimensions ($q \in \mathbb{R}^2, p \in \mathbb{R}^2$) plonge la variété circulaire $\mathbb{S}^1$ sans singularité de coupure, éliminant totalement les artefacts de dédoublement de pendule observés dans les modélisations scalaires 1D.
+    \item \textbf{Trajectoire spatiale de l'extrémité :} La Figure~\ref{fig:trajectory} illustre le tracé 2D suivi par l'extrémité du pendule dans l'espace image. La courbe prédite par intégration symplectique Leapfrog (pointillés rouges) coïncide avec une grande précision avec l'arc circulaire réel (vert).
+\end{enumerate}
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.55\textwidth]{../physics_wm_trajectory.png}
-    \caption{Visualisation continue de la trajectoire réelle (ligne verte continue) et prédite par le HNN (ligne rouge pointillée) de l'extrémité du double pendule dans l'espace image de $T+2$ à $T+11$.}
+    \includegraphics[width=0.48\textwidth]{images/simple_pendulum_trajectory.png}
+    \caption{Tracé spatial continu de l'extrémité du pendule dans le plan image pour la vérité terrain (ligne verte continue) et la prédiction HNN (pointillés rouges).}
     \label{fig:trajectory}
 \end{figure}
 
-Pour évaluer quantitativement la conservation de la physique, la Figure~\ref{fig:energy_comparison} compare l'évolution temporelle de l'énergie physique totale du système sur un long horizon de prédiction ($40$ étapes de temps de $\Delta t = 0.2$ s) pour la vérité terrain (Acrobot passif), notre modèle (HNN-ODE) et une baseline (Neural ODE classique sans contrainte hamiltonienne).
+\subsubsection{Conservation de l'Énergie Totale sur Long Horizon \texorpdfstring{($T=100$)}{(T=100)}}
+Pour évaluer rigoureusement la validité physique du modèle et démontrer l'absence de dérive séculaire, nous suivons l'évolution temporelle de l'énergie totale hamiltonienne apprise $\mathcal{H}(z_t) = V_\theta(q) + \frac{1}{2}\|p\|^2$ sur un rollout de 100 pas ($t \in [0, 20]$ secondes, soit 5 périodes complètes d'oscillation). Nous comparons notre intégrateur symplectique Leapfrog ($S=2$ sous-pas) à un intégrateur explicite d'Euler ainsi qu'à une baseline de type Neural ODE non-symplectique dissipant l'énergie (Figure~\ref{fig:energy_comparison}).
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.75\textwidth]{../physics_wm_energy_comparison.png}
-    \caption{Évolution temporelle de l'énergie physique totale du système. La vérité terrain (ligne verte) reste parfaitement constante. Notre modèle HNN-ODE (ligne bleue en pointillés) préserve la conservation de l'énergie avec des oscillations infimes, tandis que la baseline Neural ODE classique (ligne rouge pointillée) dissipe artificiellement l'énergie, illustrant l'importance de la régularisation hamiltonienne.}
+    \includegraphics[width=\linewidth]{images/simple_pendulum_energy_conservation.png}
+    \caption{Conservation de l'énergie physique sur un horizon étendu de 100 pas ($t \in [0, 20]$ s). (a) Énergie totale $\mathcal{H}(z_t)$ au cours du temps. Notre modèle Leapfrog (ligne bleue continue) reste rigoureusement plat et borné autour de l'énergie initiale ($H_0 = -13.19$), alors que la baseline non-symplectique dissipe artificiellement l'énergie et qu'Euler explose. (b) Erreur absolue d'énergie $|\mathcal{H}(z_t) - H_0|$ en échelle logarithmique, confirmant l'absence de dérive séculaire cumulative pour Leapfrog.}
     \label{fig:energy_comparison}
 \end{figure}
 
-On constate que la baseline standard dévie rapidement du comportement physique réel, entraînant une dissipation prononcée de l'énergie au cours du temps. En revanche, le modèle HNN-ODE reste extrêmement proche de l'énergie de la vérité terrain, validant l'efficacité de la structure symplectique induite et de la fonction de perte physique $\mathcal{L}_{\text{energy}}$ et $\mathcal{L}_{\text{cc}}$.
+Comme démontré dans la Figure~\ref{fig:energy_comparison}(a), la trajectoire de l'énergie sous notre intégrateur Leapfrog est une \textbf{ligne quasi plate horizontale} bornée dans un intervalle infime ($\Delta \mathcal{H} < 0.01$). À l'inverse :
+\begin{itemize}
+    \item L'intégrateur explicite d'Euler explose rapidement (+11 unités d'énergie en 50 pas).
+    \item La baseline Neural ODE non-symplectique perd continuellement de l'énergie par amortissement numérique artificiel (décroissance de $-13.19$ à $-17.2$).
+\end{itemize}
+En échelle logarithmique (Figure~\ref{fig:energy_comparison}(b)), l'erreur de Leapfrog reste confinée de manière permanente entre $10^{-4}$ et $10^{-2}$ sans croissance monotone, confirmant formellement la préservation d'un Hamiltonien approché (\textit{Shadow Hamiltonian}) sur le long terme.
 
 % \section{Discussion et Perspectives}
 % \label{sec:discussion}
@@ -269,7 +294,7 @@ On constate que la baseline standard dévie rapidement du comportement physique 
 %
 % Cependant, plusieurs limitations ouvrent la voie à des perspectives intéressantes :
 % \begin{itemize}
-%     \item \textbf{Sensibilité à l'initialisation et chaos :} Le double pendule étant un système chaotique, de petites erreurs de reconstruction ou de projection initiale de l'encodeur visuel dans l'espace des phases se traduisent par des divergences significatives à long terme. L'ajout d'une formulation variationnelle (comme dans les VAE) pour modéliser l'incertitude dans l'espace latent permettrait de traiter ce problème.
+%     \item \textbf{Extension aux systèmes multi-corps et chaos :} Dans cette étude menée sur le pendule simple, le système est périodique et régulier. Une perspective naturelle consiste à étendre cette approche au double pendule (\texttt{Acrobot-v1}), qui est un système hautement chaotique évoluant sur la variété torique $\mathbb{T}^2 = \mathbb{S}^1 \times \mathbb{S}^1$.
 %     \item \textbf{Hamiltonien contrôlé :} Actuellement, le modèle apprend uniquement la dynamique passive du système. Pour une utilisation réelle en contrôle optimal ou planification, il est nécessaire d'étendre la formulation à un système contrôlé (\textit{Port-Controlled Hamiltonian Systems}) où les actions (couples appliqués) modifient dynamiquement les équations d'Hamilton.
 %     \item \textbf{Alternative lagrangienne :} Une alternative consiste à utiliser des réseaux de neurones lagrangiens (LNN) \cite{cranmer2020lagrangian}, ce qui permettrait d'apprendre directement dans l'espace des coordonnées généralisées sans avoir besoin de définir des moments canoniques $p$ explicites.
 % \end{itemize}
@@ -277,7 +302,7 @@ On constate que la baseline standard dévie rapidement du comportement physique 
 \section{Conclusion}
 \label{sec:conclusion}
 Pour conclure, comme on a vu à travers ce papier, on peut très bien avoir un world model pouvant apprendre la physique qui nous entoure tout en restant dans son espace latent. On peut aussi apercevoir l'importance du choix des loss du modèle qui ont un impact considérable sur l'entraînement de celui-ci et donc de ses performances finales. Pour plus tard, on pourrait très bien ajouter la partie ``controller'' du world model pour le model puisse intéragir avec le monde qui nous entoure. Ce travail ouvre de nouvelles perspectives pour le développement de world model plus robuste et physiquement réalistes pour la planification et le contrôle en robotique.
-% Nous avons présenté une approche de modèle de monde continu contraint par la physique pour la prédiction de la dynamique d'un double pendule à partir de pixels. En combinant un encodeur-décodeur convolutif avec un réseau de neurones hamiltonien et un solveur d'ODE en temps continu, le modèle est capable d'apprendre un espace de phase latent structuré préservant les lois physiques fondamentales de conservation de l'énergie. L'introduction de pertes physiques dédiées permet d'orienter l'espace latent vers des variables conjuguées $(q, p)$ cohérentes avec les équations de Hamilton. Ce travail ouvre de nouvelles perspectives pour le développement de modèles de monde plus robustes et physiquement réalistes pour la planification et le contrôle en robotique.
+% Nous avons présenté une approche de modèle de monde continu contraint par la physique pour la prédiction de la dynamique d'un pendule simple à partir de pixels. En combinant un encodeur-décodeur convolutif avec un réseau de neurones hamiltonien et un solveur d'ODE en temps continu, le modèle est capable d'apprendre un espace de phase latent structuré préservant les lois physiques fondamentales de conservation de l'énergie. L'introduction de pertes physiques dédiées permet d'orienter l'espace latent vers des variables conjuguées $(q, p)$ cohérentes avec les équations de Hamilton. Ce travail ouvre de nouvelles perspectives pour le développement de modèles de monde plus robustes et physiquement réalistes pour la planification et le contrôle en robotique.
 
 \bibliographystyle{plain}
 \bibliography{wm-physics}
