@@ -26,7 +26,7 @@ graph LR
 Our architecture integrates four foundational physical and geometric principles:
 
 * **Multi-Frame Perception:** An image alone encodes position, not velocity. Stacking **3 consecutive frames** ($t=0, 1, 2$) allows the convolutional encoder to extract both canonical position $\mathbf{q}_0$ and momentum $\mathbf{p}_0$ deterministically.
-* **4D Phase Space ($\mathbb{S}^1$ Circle Topology):** The configuration space of a pendulum is a circle $\mathbb{S}^1$. Projecting a circle onto a 1D scalar ($q \in \mathbb{R}$) introduces a coordinate cut at $\pm\pi$, causing trajectory jumps and visual "ghost pendulums". Setting $\text{latent\_dim} = 2$ ($q \in \mathbb{R}^2, p \in \mathbb{R}^2$) embeds the circle smoothly as $(\sin\theta, -\cos\theta)$, completely eliminating visual ghosting.
+* **4D Phase Space ($\mathbb{S}^1$ Circle Topology):** The configuration space of a pendulum is a circle $\mathbb{S}^1$. Projecting a circle onto a 1D scalar ($q \in \mathbb{R}$) introduces a coordinate cut at $\pm\pi$, causing trajectory jumps and visual "ghost pendulums". Setting $\texttt{latent dim} = 2$ ($q \in \mathbb{R}^2, p \in \mathbb{R}^2$) embeds the circle smoothly as $(\sin\theta, -\cos\theta)$, completely eliminating visual ghosting.
 * **Separable Hamiltonian:** We constrain $\mathcal{H}(\mathbf{q}, \mathbf{p}) = V(\mathbf{q}) + \frac{1}{2}\|\mathbf{p}\|^2$. This guarantees that velocity equals momentum ($\dot{\mathbf{q}} = \mathbf{p}$), preventing negative effective mass. Initializing the potential $V(\mathbf{q})$ to zero allows the model to learn a free-particle trajectory in early epochs, permanently preventing **black-image collapse**.
 * **Symplectic Leapfrog Integrator:** Using an explicit 2nd-order Störmer-Verlet scheme preserves phase space volume (Liouville's theorem) and bounds energy errors over long rollouts without artificial numerical dissipation.
 * **Efficient Pipeline:**
@@ -60,9 +60,7 @@ Tracking total Hamiltonian energy $\mathcal{H}(z_t) = V_\theta(q) + \frac{1}{2}\
   <img src="images/simple_pendulum_energy_conservation.png" alt="Energy Conservation" width="95%" />
 </p>
 
----
-
-## 📂 Repository Structure
+<!-- ## 📂 Repository Structure
 
 ```text
 ├── docs/
@@ -84,7 +82,7 @@ Tracking total Hamiltonian energy $\mathcal{H}(z_t) = V_\theta(q) + \frac{1}{2}\
 │   └── physics_wm/                            # Double pendulum (Acrobot) experiments
 ├── requirements.txt                           # Minimal dependencies
 └── README.md
-```
+``` -->
 
 ---
 
